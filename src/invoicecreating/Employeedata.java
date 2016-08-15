@@ -166,9 +166,14 @@ public class Employeedata{
 		updateEmployeeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
-					invoiceDatabase.updatepeopledata(originalname,name.getText().trim(), title.getText().trim(), billrate.getText().trim(), ((String)(roleComboBox.getItemAt(roleComboBox.getSelectedIndex()))));
-					new Employeedata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
+						invoiceDatabase.updatepeopledata(originalname,name.getText().trim(), title.getText().trim(), billrate.getText().trim(), ((String)(roleComboBox.getItemAt(roleComboBox.getSelectedIndex()))));
+						rowIndexPointer="";
+						new Employeedata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}
@@ -178,9 +183,14 @@ public class Employeedata{
 		inactiveEmployeeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
-					invoiceDatabase.inactivepeopledata(name.getText().trim());
-					new Employeedata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
+						invoiceDatabase.inactivepeopledata(name.getText().trim());
+						rowIndexPointer="";
+						new Employeedata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}

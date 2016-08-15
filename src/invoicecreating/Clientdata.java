@@ -125,6 +125,9 @@ public class Clientdata{
 		myFrame.add(titleLabel);
 		
 		number = new JTextField();
+		if(rowIndexPointer.trim().length()!=0){
+			number.setEditable(false);
+		}
 		number.setFont(new Font("Times New Roman",  Font.PLAIN, 14));
 		number.setBounds(250, 148, 250, 25);
 		myFrame.add(number);
@@ -262,7 +265,7 @@ public class Clientdata{
 						ex.printStackTrace();
 					}
 				}else{
-					JOptionPane.showMessageDialog(null, "Please enter correct details");
+					JOptionPane.showMessageDialog(null, "Please enter all clients details");
 				}
 			}
 		});
@@ -270,11 +273,15 @@ public class Clientdata{
 		updateClientButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
-					invoiceDatabase.updateclients(clientNumber,number.getText().trim(), name.getText().trim(), addressLine1.getText().trim(), addressLine2.getText().trim(), city.getText().trim(), state.getText().trim(), zip.getText().trim(), email.getText().trim(), contact.getText().trim(), ((String)(invoiceFreqComboBox.getItemAt(invoiceFreqComboBox.getSelectedIndex()))), ((String)(billingTermsComboBox.getItemAt(billingTermsComboBox.getSelectedIndex()))), ((String)(invoiceGroupingComboBox.getItemAt(invoiceGroupingComboBox.getSelectedIndex()))));
-					clientNumber="";
-					rowIndexPointer="";
-					new Clientdata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
+						invoiceDatabase.updateclients(clientNumber,number.getText().trim(), name.getText().trim(), addressLine1.getText().trim(), addressLine2.getText().trim(), city.getText().trim(), state.getText().trim(), zip.getText().trim(), email.getText().trim(), contact.getText().trim(), ((String)(invoiceFreqComboBox.getItemAt(invoiceFreqComboBox.getSelectedIndex()))), ((String)(billingTermsComboBox.getItemAt(billingTermsComboBox.getSelectedIndex()))), ((String)(invoiceGroupingComboBox.getItemAt(invoiceGroupingComboBox.getSelectedIndex()))));
+						clientNumber="";
+						rowIndexPointer="";
+						new Clientdata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}				
@@ -284,9 +291,15 @@ public class Clientdata{
 		deleteClientButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();					
-					invoiceDatabase.inactiveclients(number.getText().trim());
-					new Clientdata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();					
+						invoiceDatabase.inactiveclients(number.getText().trim());
+						clientNumber="";
+						rowIndexPointer="";
+						new Clientdata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}

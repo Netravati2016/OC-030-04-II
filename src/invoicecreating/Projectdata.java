@@ -47,7 +47,13 @@ public class Projectdata{
 		myFrame.add(titleLabel);
 		
 		InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
-		ArrayList listOfProjects=invoiceDatabase.selectprojectdata();
+		ArrayList templistOfProjects=null;
+		if(userRole!=null && userRole.trim().length()!=0 && userRole.equalsIgnoreCase("Project Manager")){
+			templistOfProjects=invoiceDatabase.selectprojectdata(userType);
+		}else{
+			templistOfProjects=invoiceDatabase.selectprojectdata();
+		}
+		final ArrayList listOfProjects=templistOfProjects;
 		int totalColumns=9;
 		String projectColumnNames[] = {"Client", "Project Number", "Project Name", "State Date", "End Date", "Status","Project Manager", "Client Contact", "Budget"};
 		String outdata[][]=new String[0][totalColumns];
@@ -77,8 +83,6 @@ public class Projectdata{
 	    rowSelection.addListSelectionListener(new ListSelectionListener(){
 	    	public void valueChanged(ListSelectionEvent e) {
 	    		rowIndexPointer=""+projectTable.getSelectedRow();
-	    		InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
-	    		ArrayList listOfProjects=invoiceDatabase.selectprojectdata();
 	    		String[] project=(String[])listOfProjects.get(projectTable.getSelectedRow());
 	    		projectnumber=project[1];
 	    		client.setText(project[0]);
@@ -99,7 +103,9 @@ public class Projectdata{
 		JButton addProjectButton = new JButton("Add Project");
 		addProjectButton.setFont(new Font("Times New Roman", Font.ITALIC, 14));
 		addProjectButton.setBounds(50, 600, 200, 30);		
-		myFrame.add(addProjectButton);
+		if(userRole!=null && userRole.trim().length()!=0 && !(userRole.equalsIgnoreCase("Project Manager"))){
+			myFrame.add(addProjectButton);
+		}
 		
 		JButton updateProjectButton = new JButton("Update Project");
 		updateProjectButton.setFont(new Font("Times New Roman", Font.ITALIC, 14));
@@ -221,11 +227,15 @@ public class Projectdata{
 		updateProjectButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
-					invoiceDatabase.updateprojects(projectnumber, client.getText().trim(), projectNumber.getText().trim(), projectName.getText().trim(), stateDate.getText().trim(), endDate.getText().trim(), status.getText().trim(), projectManager.getText().trim(), clientContact.getText().trim(), budget.getText().trim());
-					projectnumber="";
-					rowIndexPointer="";
-					new Projectdata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
+						invoiceDatabase.updateprojects(projectnumber, client.getText().trim(), projectNumber.getText().trim(), projectName.getText().trim(), stateDate.getText().trim(), endDate.getText().trim(), status.getText().trim(), projectManager.getText().trim(), clientContact.getText().trim(), budget.getText().trim());
+						projectnumber="";
+						rowIndexPointer="";
+						new Projectdata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}
@@ -235,9 +245,15 @@ public class Projectdata{
 		inactiveProjectButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try{
-					InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
-					invoiceDatabase.inactiveprojects(projectNumber.getText());
-					new Projectdata(myFrame,userRole,userType,userID);
+					if(rowIndexPointer.trim().length()!=0){
+						InvoiceDatabase invoiceDatabase=new InvoiceDatabase();						
+						invoiceDatabase.inactiveprojects(projectNumber.getText());
+						projectnumber="";
+						rowIndexPointer="";
+						new Projectdata(myFrame,userRole,userType,userID);
+					}else{
+						JOptionPane.showMessageDialog(null, "Please select table row details");
+					}
 				}catch(Exception ex){
 					ex.printStackTrace();
 				}

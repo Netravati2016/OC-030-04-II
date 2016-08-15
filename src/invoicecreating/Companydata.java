@@ -13,6 +13,7 @@ import java.util.Iterator;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -154,13 +155,20 @@ public class Companydata{
 		
 		updateButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(name!=null && addressLine1!=null && city!=null && state!=null && zip!=null && name.getText().trim().length()!=0 && addressLine1.getText().trim().length()!=0 && city.getText().trim().length()!=0 && state.getText().trim().length()!=0 && zip.getText().trim().length()!=0){
-					try{
-						invoiceDatabase.updatecompanydata(name.getText().trim(), addressLine1.getText().trim(), addressLine2.getText().trim(), city.getText().trim(), state.getText().trim(), zip.getText().trim());
-						new Companydata(myFrame,userRole,userType,userID);
-					}catch(Exception ex){
-						ex.printStackTrace();
+				if(rowIndexPointer.trim().length()!=0){
+					if(name!=null && addressLine1!=null && city!=null && state!=null && zip!=null && name.getText().trim().length()!=0 && addressLine1.getText().trim().length()!=0 && city.getText().trim().length()!=0 && state.getText().trim().length()!=0 && zip.getText().trim().length()!=0){
+						try{
+							invoiceDatabase.updatecompanydata(name.getText().trim(), addressLine1.getText().trim(), addressLine2.getText().trim(), city.getText().trim(), state.getText().trim(), zip.getText().trim());
+							rowIndexPointer="";
+							new Companydata(myFrame,userRole,userType,userID);
+						}catch(Exception ex){
+							ex.printStackTrace();
+						}
+					}else{
+						JOptionPane.showMessageDialog(null, "Please enter all company details");
 					}
+				}else{
+					JOptionPane.showMessageDialog(null, "Please select table row details");
 				}
 			}
 		});
