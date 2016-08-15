@@ -1,6 +1,5 @@
 package invoicecreating;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -10,12 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 
 public class UserOptions implements ActionListener{
 	JFrame thisFrame;
@@ -149,17 +143,17 @@ public class UserOptions implements ActionListener{
 			assignButton.addActionListener(this);
 			myFrame.add(assignButton);
 			
-			JButton viewHoursButton = new JButton("View Hours");
+			JButton viewHoursButton = new JButton("Approve Hours");
 			viewHoursButton.setBounds(315, 0, 150, 35);
 			viewHoursButton.setFont(new Font("Times New Roman", Font.ITALIC, 16));
 			viewHoursButton.addActionListener(this);
 			myFrame.add(viewHoursButton);
 			
-			JButton enterHoursButton = new JButton("Enter Hours");
-			enterHoursButton.setBounds(475, 0, 150, 35);
-			enterHoursButton.setFont(new Font("Times New Roman", Font.ITALIC, 16));
-			enterHoursButton.addActionListener(this);
-			myFrame.add(enterHoursButton);		
+//			JButton enterHoursButton = new JButton("Enter Hours");
+//			enterHoursButton.setBounds(475, 0, 150, 35);
+//			enterHoursButton.setFont(new Font("Times New Roman", Font.ITALIC, 16));
+//			enterHoursButton.addActionListener(this);
+//			myFrame.add(enterHoursButton);		
 		}
 		
 		if(userRole!=null && userRole.equalsIgnoreCase("DEVELOPER")){
@@ -184,11 +178,14 @@ public class UserOptions implements ActionListener{
 		if(event.getActionCommand().equalsIgnoreCase("Assign")){
 			new AssignEmployee(thisFrame,thisUserRole,thisUserType,thisUserId);
 		}
-		if(event.getActionCommand().equalsIgnoreCase("View Hours")){
-			new Invoicedata().displayHours(thisFrame,thisUserRole,thisUserType,thisUserId);
+		if(event.getActionCommand().equalsIgnoreCase("Approve Hours")){
+			new ApproveHours(thisFrame,thisUserRole,thisUserType,thisUserId);
 		}
 		if(event.getActionCommand().equalsIgnoreCase("Enter Hours")){
 			new EnterHours(thisFrame,thisUserRole,thisUserType,thisUserId);
+		}
+		if(event.getActionCommand().equalsIgnoreCase("System")){
+			new SystemManager(thisFrame,thisUserRole,thisUserType,thisUserId);
 		}
     } 
 }

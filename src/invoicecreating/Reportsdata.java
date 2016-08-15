@@ -1,5 +1,7 @@
 package invoicecreating;
 
+import invoicedatabase.InvoiceDatabase;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -118,37 +120,34 @@ public class Reportsdata{
 		titleLabel.setBounds(250, 100, 350, 40);
 		myFrame.add(titleLabel);
 		
-		ArrayList listOfEmployeeHours=new ArrayList();
-		int totalColumns=6;
-		String hourColumnNames[] = {"Project Number", "Project Name", "Developer Name", "Worked Hours", "Bill Rate", "Amount"};
-		String output[][]=new String[0][totalColumns];
-		if(listOfEmployeeHours!=null && listOfEmployeeHours.size()!=0){			
-			Iterator iterator=listOfEmployeeHours.iterator();
+		InvoiceDatabase invoiceDatabase=new InvoiceDatabase();
+		final ArrayList listOfProjects=invoiceDatabase.developerhoursdata();
+		int totalColumns=9;
+		String enterhoursColumnNames[] = {"Client Number", "Project Number", "Developer Name", "Start Date", "End Date", "Worked Hours", "Bill Rate", "Total Amount", "Approve Status"};
+		String outdata[][]=new String[0][totalColumns];
+		if(listOfProjects!=null && listOfProjects.size()!=0){			
+			Iterator iterator=listOfProjects.iterator();
 			int arrayIndex=0;
+			outdata=new String[listOfProjects.size()][totalColumns];
 			while(iterator.hasNext()){
-				String[] hourtokens=(String[])iterator.next();
-				output[arrayIndex][0]=hourtokens[0];
-				output[arrayIndex][1]=hourtokens[1];
-				output[arrayIndex][2]=hourtokens[2];
-				output[arrayIndex][3]=hourtokens[3];
-				output[arrayIndex][4]=hourtokens[4];
-				output[arrayIndex][5]=hourtokens[5];
+				String[] enterhoursTokens=(String[])iterator.next();
+				outdata[arrayIndex][0]=enterhoursTokens[0];
+				outdata[arrayIndex][1]=enterhoursTokens[1];
+				outdata[arrayIndex][2]=enterhoursTokens[2];
+				outdata[arrayIndex][3]=enterhoursTokens[4];
+				outdata[arrayIndex][4]=enterhoursTokens[5];
+				outdata[arrayIndex][5]=enterhoursTokens[3];
+				outdata[arrayIndex][6]=enterhoursTokens[6];
+				outdata[arrayIndex][7]=""+(Integer.parseInt(enterhoursTokens[3]))*(Integer.parseInt(enterhoursTokens[6]));
+				outdata[arrayIndex][8]=enterhoursTokens[7];
 				arrayIndex=arrayIndex+1;
 			}			
 		}
 		
-		final JTable budgetTable = new JTable(output, hourColumnNames);
-	    ListSelectionModel rowSelection = budgetTable.getSelectionModel();
-	    rowSelection.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-	    rowSelection.addListSelectionListener(new ListSelectionListener(){
-	    	public void valueChanged(ListSelectionEvent e) {
-	    		rowIndexPointer=""+budgetTable.getSelectedRow();
-	    	}
-	    });	    
-		JScrollPane scrollPane = new JScrollPane(budgetTable);
-		scrollPane.setBounds(100, 200, 475, 250);
-		myFrame.add(scrollPane, BorderLayout.CENTER);
+		final JTable assignprojectTable = new JTable(outdata, enterhoursColumnNames);
+		JScrollPane tableScrollPane = new JScrollPane(assignprojectTable);
+		tableScrollPane.setBounds(100, 200, 475, 250);
+		myFrame.add(tableScrollPane, BorderLayout.CENTER);
 		
 		thisFrame=myFrame;
 		myFrame.getContentPane().repaint();
