@@ -1,25 +1,43 @@
 package invoicedatabase;
 
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Vector;
+import java.util.Random;
 
 import au.com.bytecode.opencsv.CSVReader;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfWriter;
+
 public class InvoiceDatabase {
+	private BaseFont baseFont,tempBF;
+	private int pageNumber = 0;
+	public void saveInvoicePdf(String filename,String[] client,String[] project,ArrayList developerlist,String totalamount,String invoicenumber){
+		generateInvoicePDF(filename.trim()+".pdf",client,project,developerlist,totalamount,invoicenumber);
+	 }
 	public Connection invoiceCreationDBConnection(){
 		Connection sqlconnection=null;
 		try{
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
 			String mysqConnectionPath="jdbc:mysql://localhost/divya";
-			sqlconnection =DriverManager.getConnection(mysqConnectionPath,"root","unoscm2010");  
+			sqlconnection =DriverManager.getConnection(mysqConnectionPath,"root","test");  
 		}catch (Exception e){
 			e.printStackTrace();
 		}
@@ -244,6 +262,31 @@ public class InvoiceDatabase {
 		}
 	}
 	
+	public String saveinvoicedata(String client,String projectnumber,String invoicedate,String amount) throws SQLException{
+		Connection sqlconnection=null;
+		PreparedStatement sqlstatement=null;
+		String invoicenumber=null;
+		try{
+			SimpleDateFormat sdf=new SimpleDateFormat("hhmmss");
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				String sql="insert into invoice_data (invoicenumber,client,projectnumber,invoicedate,amount) values (?,?,?,?,?)";
+				sqlstatement=sqlconnection.prepareStatement(sql);
+				invoicenumber=new Random().nextInt(6)+sdf.format(new Date());
+				sqlstatement.setInt(1,Integer.parseInt(invoicenumber));				
+				sqlstatement.setInt(2,Integer.parseInt(client));
+				sqlstatement.setInt(3,Integer.parseInt(projectnumber));
+				sqlstatement.setString(4,invoicedate);
+				sqlstatement.setInt(5,Integer.parseInt(amount));
+				sqlstatement.addBatch();
+	    		sqlstatement.executeBatch();
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return invoicenumber;
+	}
+	
 	public void savedeveloperhoursdata(String client,String projectnumber,String developername,String workhours,String startdate,String enddate,String billrate) throws SQLException{
 		Connection sqlconnection=null;
 		PreparedStatement sqlstatement=null;
@@ -356,6 +399,90 @@ public class InvoiceDatabase {
         	err.printStackTrace();
         }
         return peopledatalist;
+    }
+	
+	public boolean checkdeveloperhours(String client,String projectnumber,String developername,String workhours,String startdate){
+		Connection sqlconnection=null;
+		Statement sqlstatement=null;
+		boolean check=false;
+		try{
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				sqlstatement = sqlconnection.createStatement();
+				String sql="select * from developer_hours_data where client='"+client+"' and projectnumber='"+projectnumber+"' and developername='"+developername+"' and workhours='"+workhours+"' and startdate='"+startdate+"'";
+	            System.out.println(sql);
+				ResultSet rs = sqlstatement.executeQuery(sql);
+	    		if(rs!=null){
+	    			while(rs.next()){
+	    				if(rs.getString("startdate")!=null && rs.getString("startdate").trim().length()!=0){
+		    				System.out.println(rs.getString("startdate")+"  "+rs.getString("projectnumber"));
+	    					check=true;
+	    				}
+	    			}
+	    		}
+			}
+        }catch(SQLException err){
+        	err.printStackTrace();
+        }
+        return check;
+    }
+	
+	public ArrayList selectinvoicedata(){
+		Connection sqlconnection=null;
+		Statement sqlstatement=null;
+		ArrayList invoicedatalist=null;
+		try{
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				sqlstatement = sqlconnection.createStatement();
+				String sql="select client,projectnumber,sum(workhours*billrate) from developer_hours_data where hoursapprove='APPROVED' group by client,projectnumber";
+	            ResultSet rs = sqlstatement.executeQuery(sql);
+	    		if(rs!=null){
+	    			invoicedatalist=new ArrayList();
+	    			while(rs.next()){
+	    				String[] people_data=new String[4];
+	    				people_data[0]=""+rs.getString("client");
+	    				people_data[1]=""+rs.getString("projectnumber");
+	    				people_data[2]=""+rs.getInt("sum(workhours*billrate)");
+	    				invoicedatalist.add(people_data);
+	    			}
+	    		}
+			}
+        }catch(SQLException err){
+        	err.printStackTrace();
+        }
+        return invoicedatalist;
+    }
+	
+	public ArrayList selectinvoicedevelopersdata(String clientnumber,String projectnumber){
+		Connection sqlconnection=null;
+		Statement sqlstatement=null;
+		ArrayList invoicedeveloperdatalist=null;
+		try{
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				sqlstatement = sqlconnection.createStatement();
+				String sql="select * from developer_hours_data where client="+clientnumber+" and projectnumber="+projectnumber+" and hoursapprove='APPROVED'";
+	            ResultSet rs = sqlstatement.executeQuery(sql);
+	    		if(rs!=null){
+	    			invoicedeveloperdatalist=new ArrayList();
+	    			while(rs.next()){
+	    				String[] invoice_developer_data=new String[7];
+	    				invoice_developer_data[0]=rs.getString("client");
+	    				invoice_developer_data[1]=rs.getString("projectnumber");
+	    				invoice_developer_data[2]=rs.getString("developername");
+	    				invoice_developer_data[3]=""+rs.getInt("workhours");
+	    				invoice_developer_data[4]=rs.getString("startdate");
+	    				invoice_developer_data[5]=rs.getString("enddate");
+	    				invoice_developer_data[6]=""+rs.getInt("billrate");
+	    				invoicedeveloperdatalist.add(invoice_developer_data);
+	    			}
+	    		}
+			}
+        }catch(SQLException err){
+        	err.printStackTrace();
+        }
+        return invoicedeveloperdatalist;
     }
 	
 	public String[] getdeveloperdata(String name){
@@ -623,6 +750,40 @@ public class InvoiceDatabase {
         return peopledatalist;
     }
 	
+	public String[] clientdata(String clientnumber){
+		Connection sqlconnection=null;
+		Statement sqlstatement=null;
+		String[] client_data=null;
+		try{
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				sqlstatement = sqlconnection.createStatement();
+				String sql="select * from client_data where number="+clientnumber+" and inactive='N'";
+	            ResultSet rs = sqlstatement.executeQuery(sql);
+	    		if(rs!=null){
+	    			while(rs.next()){
+	    				client_data=new String[12];
+	    				client_data[0]=""+rs.getInt("number");
+	    				client_data[1]=rs.getString("name");
+	    				client_data[2]=rs.getString("addressline1");
+	    				client_data[3]=rs.getString("addressline2");
+	    				client_data[4]=rs.getString("city");
+	    				client_data[5]=rs.getString("state");
+	    				client_data[6]=""+rs.getInt("zip");
+	    				client_data[7]=rs.getString("email");
+	    				client_data[8]=rs.getString("contact");
+	    				client_data[9]=rs.getString("invoicefreq");
+	    				client_data[10]=rs.getString("billingterms");
+	    				client_data[11]=rs.getString("invoicegrouping");
+	    			}
+	    		}
+			}
+        }catch(SQLException err){
+        	err.printStackTrace();
+        }
+        return client_data;
+    }
+	
 	public ArrayList developerdata(){
 		Connection sqlconnection=null;
 		Statement sqlstatement=null;
@@ -778,6 +939,38 @@ public class InvoiceDatabase {
         return clientdatalist;
     }
 	
+	public String[] selectprojectdata(String clientnumber,String projectnumber){
+		Connection sqlconnection=null;
+		Statement sqlstatement=null;
+		String[] project_data=null;
+		try{
+			sqlconnection=invoiceCreationDBConnection();
+			if(sqlconnection!=null){
+				sqlstatement = sqlconnection.createStatement();
+				String sql="select * from project_data where client="+clientnumber+" and projectnumber="+projectnumber;
+				System.out.println(sql);
+	            ResultSet rs = sqlstatement.executeQuery(sql);
+	    		if(rs!=null){
+	    			while(rs.next()){
+	    				project_data=new String[9];
+	    				project_data[0]=""+rs.getInt("client");
+	    				project_data[1]=""+rs.getInt("projectnumber");
+	    				project_data[2]=rs.getString("projectname");
+	    				project_data[3]=rs.getString("startdate");
+	    				project_data[4]=rs.getString("enddate");
+	    				project_data[5]=rs.getString("status");
+	    				project_data[6]=rs.getString("projectmanager");
+	    				project_data[7]=rs.getString("clientcontact");
+	    				project_data[8]=""+rs.getDouble("budget");
+	    			}
+	    		}
+			}
+        }catch(SQLException err){
+        	err.printStackTrace();
+        }
+        return project_data;
+    }
+	
 	public String[] userloginAuthentication(String loginid,String password){
 		Connection sqlconnection=null;
 		Statement sqlstatement=null;
@@ -902,4 +1095,148 @@ public class InvoiceDatabase {
 			ex.printStackTrace();
 		}	
 	}
+	
+	private void generateInvoicePDF(String filename,String[] client,String[] project,ArrayList developerlist,String totalamount,String invoicenumber){
+		 Document documentpdf = new Document();
+		 PdfWriter documentPdfWriter = null;
+		 initializeTextSizeFonts();
+		 try {
+			 String path = "C://Users//divya//Desktop//"+filename;
+			 documentPdfWriter = PdfWriter.getInstance(documentpdf , new FileOutputStream(path));
+			 documentpdf.addAuthor("Test");
+			 documentpdf.addCreationDate();
+			 documentpdf.addProducer();
+			 documentpdf.addCreator("Test");
+			 documentpdf.addTitle("Generate Invoices as PDF format");
+			 documentpdf.setPageSize(PageSize.LETTER);
+			 documentpdf.open();
+			 PdfContentByte pdfcontentByte = documentPdfWriter.getDirectContent();	   
+			 boolean startPageNumber = true;
+			 createTextLabels(pdfcontentByte,400,760,"Eagle Consulting Invoice");
+			 int height=0;
+			 for(int width=0;width<developerlist.size();width++){
+				 String[] developinvoicedata=(String[])developerlist.get(width);
+				 if(startPageNumber){
+					 startPageNumber = false;
+					 invoicedetails(documentpdf,pdfcontentByte,invoicenumber); 
+					 companydata(pdfcontentByte,client,totalamount,project);
+					 height = 507; 
+				 }
+				 tabledata(pdfcontentByte,width,height,developinvoicedata);
+				 height = height - 15;
+				 if(height < 50){
+					 displaypageNumber(pdfcontentByte);
+					 documentpdf.newPage();
+					 startPageNumber = true;
+				 }
+			 }
+			 createTextLabels(pdfcontentByte,50,150,"Remit Payment To:");
+			 createTextLabels(pdfcontentByte,75,135,"Eagle Consulting");
+			 createTextLabels(pdfcontentByte,75,120,"2501 E Memorial Road");
+			 createTextLabels(pdfcontentByte,75,105,"Edmond, Ok 73013");			 
+			 displaypageNumber(pdfcontentByte);
+		 }catch(DocumentException dex){
+			 dex.printStackTrace();
+		 }
+		 catch(Exception ex){
+			 ex.printStackTrace();
+		 }finally{
+			 if(documentpdf != null){
+				 documentpdf.close();
+			 }
+			 if(documentPdfWriter != null){
+				 documentPdfWriter.close();
+			 }
+		 }
+	 }
+	 private void invoicedetails(Document documentpdf, PdfContentByte cb,String invoicenumber){
+		 try{
+			 cb.setLineWidth(1f);
+			 cb.rectangle(40,615,510,120);
+			 cb.moveTo(275,735);
+			 cb.lineTo(275,615);
+			 cb.stroke();
+			 createTextLabels(cb,375,723,"Invoice Number: "+invoicenumber);
+			 createTextLabels(cb,375,703,"Invoice Date: "+new SimpleDateFormat("MM/dd/yyyy").format(new Date()));
+			 createTextLabels(cb,375,683,"Payment Terms: ");
+			 createTextLabels(cb,375,663,"Billing Frequency: ");
+			 createTextLabels(cb,375,643,"Total Amount Due: $");
+			 cb.rectangle(20,50,550,410); 
+			 createTextLabels(cb,50,525,"Date");
+			 createTextLabels(cb,150,525,"Description");
+			 createTextLabels(cb,400,525,"Rate");
+			 createTextLabels(cb,450,525,"Hours");
+			 createTextLabels(cb,500,525,"Amount");
+			 Image companyLogo = Image.getInstance(System.getProperty("user.dir")+"\\src\\invoiceimportdata\\eagle.png");
+			 companyLogo.setAbsolutePosition(50,750);
+			 companyLogo.scalePercent(25);
+			 documentpdf.add(companyLogo);
+		 }catch (Exception dex){
+			 dex.printStackTrace();
+		 }
+	 }
+	 
+	 private void companydata(PdfContentByte pdfcontentbyte,String[] clientinfo,String totalamount,String[] project){
+		 try{
+			 createTextLabels(pdfcontentbyte,75,723,clientinfo[1]);
+			 createTextLabels(pdfcontentbyte,75,708,clientinfo[2]);
+			 createTextLabels(pdfcontentbyte,75,693,clientinfo[3]);
+			 createTextLabels(pdfcontentbyte,75,678,clientinfo[4]+","+clientinfo[5]+" - "+clientinfo[6]);
+			 createTextLabels(pdfcontentbyte,75,663,"United States");
+			 createTextLabels(pdfcontentbyte,75,648,"Client ID#: "+clientinfo[0]);
+			 createTextLabels(pdfcontentbyte,75,633,project[2]);			 
+			 createTextLabels(pdfcontentbyte,475,683,clientinfo[10]);
+			 createTextLabels(pdfcontentbyte,475,663,clientinfo[9]);
+			 createTextLabels(pdfcontentbyte,475,643,totalamount);
+		 }catch (Exception ex){
+			 ex.printStackTrace();
+		 }
+	 }
+	 
+	 private void tabledata(PdfContentByte pdfcontentbyte,int index,int y,String[] developinvoicedata){
+		 DecimalFormat df = new DecimalFormat("0.00");
+		 try{
+			 createContent(pdfcontentbyte,110,y,developinvoicedata[4]+" - "+developinvoicedata[5],PdfContentByte.ALIGN_RIGHT);
+			 createContent(pdfcontentbyte,150,y,developinvoicedata[2],PdfContentByte.ALIGN_LEFT);
+			 createContent(pdfcontentbyte,400,y,developinvoicedata[6],PdfContentByte.ALIGN_LEFT);
+			 createContent(pdfcontentbyte,465,y,developinvoicedata[3],PdfContentByte.ALIGN_RIGHT);
+			 createContent(pdfcontentbyte,520,y,""+((Integer.parseInt(developinvoicedata[6])*(Integer.parseInt(developinvoicedata[3])))),PdfContentByte.ALIGN_RIGHT);
+		 }catch(Exception ex){
+			 ex.printStackTrace();
+		 }
+	 }
+
+	 private void createTextLabels(PdfContentByte cb, float x, float y, String text){
+		 cb.beginText();
+		 cb.setFontAndSize(baseFont, 10);
+		 cb.setTextMatrix(x,y);
+		 cb.showText(text.trim());
+		 cb.endText();
+	 }
+	 
+	 private void displaypageNumber(PdfContentByte cb){
+		 cb.beginText();
+		 cb.setFontAndSize(baseFont, 8);
+		 cb.showTextAligned(PdfContentByte.ALIGN_RIGHT, "Page No. " + (pageNumber+1), 570 , 25, 0);
+		 cb.endText();
+		 pageNumber++;	  
+	 }
+	 
+	 private void createContent(PdfContentByte cb, float x, float y, String text, int align){
+		 cb.beginText();
+		 cb.setFontAndSize(tempBF, 8);
+		 cb.showTextAligned(align, text.trim(), x , y, 0);
+		 cb.endText(); 
+	 }
+
+	 private void initializeTextSizeFonts(){
+		 try {
+			 baseFont = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+			 tempBF = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+		 }catch(DocumentException e){
+			 e.printStackTrace();
+		 }catch(IOException e){
+			 e.printStackTrace();
+		 }
+	 }
 }
